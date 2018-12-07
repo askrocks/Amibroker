@@ -1,0 +1,79 @@
+_SECTION_BEGIN("QuickFlip");
+SetPositionSize(1,spsShares);
+SetChartOptions( 0, chartShowArrows | chartShowDates );
+_N( Title = StrFormat( "{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) {{VALUES}}", O, H, L, C, SelectedValue( ROC( C, 1 ) ) ) );
+Plot( C, "Close", ParamColor( "Color", colorBlack ), styleNoTitle | ParamStyle( "Style" ) | GetPriceStyle() );
+
+SetBarsRequired(10000,0);
+SetPositionSize(1, spsShares);
+OptimizerSetEngine("cmae");
+
+tn = TimeNum();
+Starttime = 152500;
+EndTime = 152500;
+
+StartBar = tn == Starttime;
+EndBar = tn == EndTime;
+
+myH = ValueWhen( EndBar, (Open+Close)/2);
+myL = ValueWhen( EndBar, Low);
+
+Plot( myH, "myH", colorGreen, styleThick, Null, Null, 1 );
+Plot( myL, "myL", colorRed, styleThick, Null, Null, 1 );
+
+Support = EMA(C, 30);
+Plot(Support, "Support", colorWhite, styleDashed);
+
+//B1 = Cross(C, myH);
+//B2 = Cross(C, myL);
+B3 = Cross(C, Support);
+
+Buy = C > myH AND C > myL AND B3;
+
+Sell = 0;
+ApplyStop(stopTypeProfit, stopModePercent, 1);
+ApplyStop(stopTypeLoss, stopModePercent, 0.5);
+
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+
+PlotShapes(IIf(Buy, shapeSquare, shapeNone),colorGreen, 0, L, Offset=-40);
+PlotShapes(IIf(Buy, shapeSquare, shapeNone),colorLime, 0,L, Offset=-50);
+PlotShapes(IIf(Buy, shapeUpArrow, shapeNone),colorWhite, 0,L, Offset=-45);
+
+fntsize = 8;// font size
+dist = 65;// y-offset
+
+bi = Barindex();
+fvb = FirstVisiblevalue( bi );
+lvb = LastVisiblevalue( bi );
+dt = DateTime();
+dtformat = "\n%Y-%m-%d\n%H:%M:%S";
+bkcolor = -1;// text background color, -1 means default color (transparent)
+
+PlotTextSetFont( "", "ARIAL", fntsize, BarCount-1, 0, -1 );
+
+for ( i = fvb; i <= lvb; i++ ) {
+    if( Buy[i] || Sell[i] )	{
+		var = "\n@" + C[i];
+		if( Buy[i] )  PlotText( "Buy" + var, i, L[i], colorGreen, bkcolor, (-dist+1*fntsize) - 20 );
+		if( Sell[i] ) PlotText( "Sell" + var, i, H[i], colorRed, bkcolor, dist + 20 );
+    }
+}
+
+//S1 = Cross(myH, C);
+//S2 = Cross(myL, C);
+S3 = Cross(Support, C);
+
+Short = myH > C AND myL > C AND Cross(Support, C);
+
+Cover = 0;
+ApplyStop(stopTypeProfit, stopModePercent, 1);
+ApplyStop(stopTypeLoss, stopModePercent, 0.5);
+
+Short = ExRem(Short, Cover);
+Cover = ExRem(Cover, Short);
+
+PlotShapes(IIf(Short, shapeSquare, shapeNone),colorRed, 0, H, Offset=40);
+PlotShapes(IIf(Short, shapeSquare, shapeNone),colorOrange, 0,H, Offset=50);
+PlotShapes(IIf(Short, shapeDownArrow, shapeNone),colorWhite, 0,H, Offset=-45);
