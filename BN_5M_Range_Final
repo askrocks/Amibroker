@@ -1,0 +1,51 @@
+_SECTION_BEGIN("AlgoJi.com Range Breakout Strategy");
+SetPositionSize(1,spsShares);
+SetChartOptions( 0, chartShowArrows | chartShowDates );
+_N( Title = StrFormat( "{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) {{VALUES}}", O, H, L, C, SelectedValue( ROC( C, 1 ) ) ) );
+Plot( C, "Close", ParamColor( "Color", colorBlack ), styleNoTitle | ParamStyle( "Style" ) | GetPriceStyle() );
+
+Plot(C, "Close", IIf(O > C, colorDarkRed, colorWhite), styleCandle);
+
+tn = TimeNum();
+Starttime = 091500;
+EndTime = 091500;
+CloseTime = 151500;
+StartBar = tn == Starttime;
+EndBar = tn == EndTime;
+
+dn = DateNum();
+newDay = dn != Ref(dn, -1);
+
+myH = ValueWhen( EndBar, High);
+myL = ValueWhen( EndBar, Low);
+Plot( myH, "myH", colorGreen, styleThick, Null, Null, 0 );
+Plot( myL, "myL", colorRed, styleThick, Null, Null, 0 );
+Range = myH - myL;
+HiDSL = myH + Range;
+LowDSL = myL - Range;
+Plot(HiDSL, "Hi-DSL", colorAqua, styleDashed, Null, Null, 0);
+Plot(LowDSL, "Lo-DSL", colorDarkRed, styleDashed, Null, Null, 0);
+RawBuy = (newDay == 0) AND Cross(myL, L);
+RawShort = (newDay == 0) AND Cross(H, myH);
+
+allowtrades = Flip(newDay, Ref(RawBuy OR RawShort, -1));
+Buy = allowtrades AND RawBuy;
+Short = allowtrades AND RawShort;
+
+Cover = Cross(L, myL) OR Cross(H, HiDSL) OR Cross(myL, L) OR TimeNum() >= CloseTime;
+Sell = Cross(H, myH) OR Cross(LowDSL, L) OR Cross(myH, H) OR TimeNum() >= CloseTime;
+Short = ExRem(Short, Cover);
+Cover = ExRem(Cover, Short);
+
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+
+PlotShapes(IIf(Short, shapeSquare, shapeNone),colorRed, 0, H, Offset=10);
+PlotShapes(IIf(Short, shapeSquare, shapeNone),colorRed, 0, H, Offset=0);
+PlotShapes(IIf(Short, shapeDownArrow, shapeNone),colorWhite, 0,H, Offset=-5);
+PlotShapes(IIf(Cover, shapeHollowCircle, shapeNone),colorWhite, 0,L, Offset=-20);
+
+PlotShapes(IIf(Buy, shapeSquare, shapeNone),colorGreen, 0, L, Offset=-10);
+PlotShapes(IIf(Buy, shapeSquare, shapeNone),colorGreen, 0, L, Offset=-10);
+PlotShapes(IIf(Buy, shapeUpArrow, shapeNone),colorWhite, 0,L, Offset=-10);
+PlotShapes(IIf(Sell, shapeHollowCircle, shapeNone),colorWhite, 0,H, Offset= 20);
