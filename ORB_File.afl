@@ -1,0 +1,79 @@
+//Better Version of Open Range Breakout 
+//Coded By Rajandran R - www.marketcalls.in
+//Created Date - 04 Dec 2018
+
+//Recommended Timeframe to Run this strategy : 1min or 5min charts 
+//Higher timeframe may or may not yield desired results
+
+_SECTION_BEGIN("Open Range Breakout");
+
+SetBarsRequired(-2,-2); //Turn Quick AFL Off
+
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g ", Ref(O,-1), Ref(H,-1), Ref(L,-1), Ref(C,-1)));
+
+SetChartOptions(0 , chartShowArrows | chartShowDates);
+Plot(Close,"Candle", colorDefault, styleCandle);
+
+
+orb = ParamList("ORB Range", "5min|10min|15min|30min|60min",4);
+
+newday = Day() != Ref(Day(),-1);  //check if new day or not
+
+starttime = ValueWhen(newday,TimeNum());
+
+
+//5min ORB
+if(orb == "5min")
+{
+IBendtime = starttime+500;
+minh = ValueWhen(newday,TimeFrameGetPrice("H",in5Minute));
+minl = ValueWhen(newday,TimeFrameGetPrice("L",in5Minute));
+}
+
+//15min ORB
+if(orb == "10min")
+{
+IBendtime = starttime+1000;
+minh = ValueWhen(newday,TimeFrameGetPrice("H",in5Minute*2));
+minl = ValueWhen(newday,TimeFrameGetPrice("L",in5Minute*2));
+}
+
+
+
+//15min ORB
+if(orb == "15min")
+{
+IBendtime = starttime+1500;
+minh = ValueWhen(newday,TimeFrameGetPrice("H",in5Minute*3));
+minl = ValueWhen(newday,TimeFrameGetPrice("L",in5Minute*3));
+}
+
+
+//30min ORB
+if(orb == "30min")
+{
+IBendtime = starttime+3000;
+minh = ValueWhen(newday,TimeFrameGetPrice("H",in5Minute*6));
+minl = ValueWhen(newday,TimeFrameGetPrice("L",in5Minute*6));
+}
+
+//60min ORB
+if(orb == "60min")
+{
+IBendtime = starttime+6000;
+minh = ValueWhen(newday,TimeFrameGetPrice("H",inhourly));
+minl = ValueWhen(newday,TimeFrameGetPrice("L",inhourly));
+}
+
+printf("%g",IBendtime);
+
+DayOpen = TimeFrameGetPrice("O",inDaily);
+DayHigh = TimeFrameGetPrice("H",inDaily);
+DayLow = TimeFrameGetPrice("L",inDaily);
+
+ORBH = IIf(TimeNum() < IBendtime, Null ,minh);
+ORBL = IIf(TimeNum() < IBendtime, Null, minl);
+
+
+Plot(ORBH,"ORBH",colorBlue);
+Plot(ORBL,"ORBL",colorred);
